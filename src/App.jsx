@@ -9,7 +9,8 @@ import {
   LogOut,
   RefreshCw,
   Thermometer,
-  WifiOff
+  WifiOff,
+  X
 } from 'lucide-react';
 
 const averageBucket = (bucket) => {
@@ -72,6 +73,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [sensors, setSensors] = useState([]);
   const [unit, setUnit] = useState('F');
+  const [expandedGraph, setExpandedGraph] = useState(null);
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('sp_token');
@@ -361,16 +363,23 @@ export default function App() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sensors.map((sensor) => (
-            <SensorCard key={sensor.id} sensor={sensor} unit={unit} />
+            <SensorCard key={sensor.id} sensor={sensor} unit={unit} onGraphExpand={setExpandedGraph} />
           ))}
         </div>
       </main>
+
+      {expandedGraph && (
+        <GraphModal
+          graph={expandedGraph}
+          onClose={() => setExpandedGraph(null)}
+        />
+      )}
     </div>
   );
 }
 
-function Sparkline({ data, color }) {
-  if (!data || data.length < 2) return <div className="h-12 w-full mt-2" />;
+function Sparkline({ data, color, className = 'h-14 w-full mt-2' }) {
+  if (!data || data.length < 2) return <div className={className} />;
 
   const minX = Math.min(...data.map((point) => point.x));
   const maxX = Math.max(...data.map((point) => point.x));
@@ -401,7 +410,7 @@ function Sparkline({ data, color }) {
   };
 
   return (
-    <div className="h-14 w-full mt-2 overflow-hidden relative group">
+    <div className={`${className} overflow-hidden relative group`}>
       <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
         <path d={areaData} className={`${theme[color].fill} stroke-none`} vectorEffect="non-scaling-stroke" />
         <path
@@ -417,7 +426,7 @@ function Sparkline({ data, color }) {
   );
 }
 
-function SensorCard({ sensor, unit }) {
+function SensorCard({ sensor, unit, onGraphExpand }) {
   const { name, battery, active, sample, history } = sensor;
 
   const formatTemp = (tempF) => {
@@ -456,6 +465,17 @@ function SensorCard({ sensor, unit }) {
       y: entry.humidity
     }));
 
+  const openGraph = (type) => {
+    if (!onGraphExpand) return;
+    onGraphExpand({
+      sensorName: name,
+      metric: type,
+      value: type === 'temperature' ? formatTemp(sample?.temperature) : formatHumidity(sample?.humidity),
+      data: type === 'temperature' ? tempGraphData : humGraphData,
+      color: type === 'temperature' ? 'orange' : 'blue'
+    });
+  };
+
   const getBatteryStatus = (volts) => {
     if (!volts) return { color: 'text-gray-500', level: 'Unknown', icon: Battery };
     if (volts >= 2.8) return { color: 'text-emerald-400', level: `${volts.toFixed(2)}V`, icon: Battery };
@@ -489,7 +509,11 @@ function SensorCard({ sensor, unit }) {
 
         {sample ? (
           <div className="grid grid-cols-2 gap-4 mb-2 flex-grow">
-            <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl pt-4 pb-0 flex flex-col justify-between overflow-hidden relative">
+            <button
+              type="button"
+              onClick={() => openGraph('temperature')}
+              className="bg-orange-500/10 border border-orange-500/20 rounded-xl pt-4 pb-0 flex flex-col justify-between overflow-hidden relative text-left cursor-zoom-in hover:border-orange-400/50 transition-colors"
+            >
               <div className="px-4">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center text-orange-400">
@@ -503,9 +527,13 @@ function SensorCard({ sensor, unit }) {
                 <div className="text-3xl font-black text-white tracking-tighter">{formatTemp(sample.temperature)}</div>
               </div>
               <Sparkline data={tempGraphData} color="orange" />
-            </div>
+            </button>
 
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl pt-4 pb-0 flex flex-col justify-between overflow-hidden relative">
+            <button
+              type="button"
+              onClick={() => openGraph('humidity')}
+              className="bg-blue-500/10 border border-blue-500/20 rounded-xl pt-4 pb-0 flex flex-col justify-between overflow-hidden relative text-left cursor-zoom-in hover:border-blue-400/50 transition-colors"
+            >
               <div className="px-4">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center text-blue-400">
@@ -519,7 +547,7 @@ function SensorCard({ sensor, unit }) {
                 <div className="text-3xl font-black text-white tracking-tighter">{formatHumidity(sample.humidity)}</div>
               </div>
               <Sparkline data={humGraphData} color="blue" />
-            </div>
+            </button>
           </div>
         ) : (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500 bg-gray-950/50 rounded-xl mb-4 flex-grow border border-gray-800 border-dashed">
@@ -542,6 +570,46 @@ function SensorCard({ sensor, unit }) {
         >
           <Clock className="w-3.5 h-3.5 mr-1.5 opacity-70" />
           <span className="truncate max-w-[110px]">{formatTime(sample?.observed)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GraphModal({ graph, onClose }) {
+  const metricLabel = graph.metric === 'temperature' ? 'Temperature' : 'Humidity';
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-4xl bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${graph.sensorName} ${metricLabel} graph`}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-sm text-gray-400 font-medium">{graph.sensorName}</p>
+            <h3 className="text-2xl font-bold text-white">{metricLabel} (24H)</h3>
+            <p className="text-sm text-gray-300 mt-1">Current: {graph.value}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+            aria-label="Close graph"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="h-80 bg-gray-950/80 border border-gray-800 rounded-xl p-4">
+          <Sparkline data={graph.data} color={graph.color} className="h-full w-full" />
         </div>
       </div>
     </div>
