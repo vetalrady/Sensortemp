@@ -65,6 +65,7 @@ const downsampleHistory = (samples, intervalMinutes = 30) => {
 };
 
 export default function App() {
+  const storage = window.localStorage;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [useProxy, setUseProxy] = useState(true);
@@ -76,22 +77,24 @@ export default function App() {
   const [expandedGraph, setExpandedGraph] = useState(null);
 
   useEffect(() => {
-    const savedToken = sessionStorage.getItem('sp_token');
-    const savedEmail = sessionStorage.getItem('sp_email');
+    const savedToken = storage.getItem('sp_token') || sessionStorage.getItem('sp_token');
+    const savedEmail = storage.getItem('sp_email') || sessionStorage.getItem('sp_email');
 
     if (savedToken) {
       setAccessToken(savedToken);
       if (savedEmail) setEmail(savedEmail);
     }
-  }, []);
+  }, [storage]);
 
   const handleLogout = useCallback(() => {
     setAccessToken('');
     setSensors([]);
     setPassword('');
+    storage.removeItem('sp_token');
+    storage.removeItem('sp_email');
     sessionStorage.removeItem('sp_token');
     sessionStorage.removeItem('sp_email');
-  }, []);
+  }, [storage]);
 
   const spFetch = useCallback(
     async (endpoint, payload, token) => {
@@ -201,8 +204,8 @@ export default function App() {
 
       const token = tokenRes.accesstoken;
       setAccessToken(token);
-      sessionStorage.setItem('sp_token', token);
-      sessionStorage.setItem('sp_email', email);
+      storage.setItem('sp_token', token);
+      storage.setItem('sp_email', email);
       await fetchData(token);
     } catch (err) {
       console.error('Login Error:', err);
