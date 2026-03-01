@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sensor icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <g transform="translate(128,72)">
+    <rect x="82" y="32" width="92" height="220" rx="46" fill="#e2e8f0" />
+    <rect x="100" y="50" width="56" height="188" rx="28" fill="#0f172a" />
+    <circle cx="128" cy="282" r="76" fill="url(#core)" />
+    <rect x="112" y="96" width="32" height="176" rx="16" fill="url(#core)" />
+  </g>
+</svg>
