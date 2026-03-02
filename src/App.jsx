@@ -373,7 +373,16 @@ export default function App() {
   );
 }
 
-function Sparkline({ data, color, className = 'h-14 w-full mt-2', yMin = null, yMax = null, markerStep = null }) {
+function Sparkline({
+  data,
+  color,
+  className = 'h-14 w-full mt-2',
+  yMin = null,
+  yMax = null,
+  markerStep = null,
+  showMarkerLabels = false,
+  markerSuffix = ''
+}) {
   if (!data || data.length < 2) return <div className={className} />;
 
   const minX = Math.min(...data.map((point) => point.x));
@@ -422,16 +431,29 @@ function Sparkline({ data, color, className = 'h-14 w-full mt-2', yMin = null, y
         {markerValues.map((markerValue) => {
           const y = 100 - ((markerValue - adjustedMinY) / adjustedRangeY) * 100;
           return (
-            <line
-              key={markerValue}
-              x1="0"
-              y1={y}
-              x2="100"
-              y2={y}
-              className="stroke-gray-500/25"
-              strokeWidth="0.6"
-              vectorEffect="non-scaling-stroke"
-            />
+            <g key={markerValue}>
+              <line
+                x1="0"
+                y1={y}
+                x2="100"
+                y2={y}
+                className="stroke-gray-500/25"
+                strokeWidth="0.6"
+                vectorEffect="non-scaling-stroke"
+              />
+              {showMarkerLabels && (
+                <text
+                  x="1"
+                  y={Math.min(Math.max(y - 1, 4), 99)}
+                  fill="rgb(156 163 175 / 0.85)"
+                  fontSize="3.1"
+                  textAnchor="start"
+                  dominantBaseline="ideographic"
+                >
+                  {`${Number.isInteger(markerValue) ? markerValue : markerValue.toFixed(1)}${markerSuffix}`}
+                </text>
+              )}
+            </g>
           );
         })}
         <path d={areaData} className={`${theme[color].fill} stroke-none`} vectorEffect="non-scaling-stroke" />
@@ -648,6 +670,8 @@ function GraphModal({ graph, onClose }) {
             yMin={graph.yMin}
             yMax={graph.yMax}
             markerStep={graph.markerStep}
+            showMarkerLabels={graph.metric === 'temperature'}
+            markerSuffix={graph.metric === 'temperature' ? '°' : ''}
           />
         </div>
       </div>
