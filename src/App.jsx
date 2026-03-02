@@ -68,7 +68,6 @@ export default function App() {
   const storage = window.localStorage;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [useProxy, setUseProxy] = useState(true);
   const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -99,7 +98,7 @@ export default function App() {
   const spFetch = useCallback(
     async (endpoint, payload, token) => {
       const targetUrl = `https://api.sensorpush.com/api/v1${endpoint}`;
-      const url = useProxy ? `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` : targetUrl;
+      const url = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
       const headers = {
         Accept: 'application/json',
@@ -127,7 +126,7 @@ export default function App() {
 
       return response.json();
     },
-    [useProxy]
+    []
   );
 
   const fetchData = useCallback(
@@ -255,21 +254,6 @@ export default function App() {
                 placeholder="********"
                 required
               />
-            </div>
-
-            <div className="flex items-start bg-gray-950/50 p-3 rounded-xl border border-gray-800">
-              <input
-                type="checkbox"
-                id="proxy"
-                checked={useProxy}
-                onChange={(event) => setUseProxy(event.target.checked)}
-                className="mt-0.5 h-4 w-4 text-blue-600 focus:ring-blue-500 bg-gray-900 border-gray-700 rounded cursor-pointer"
-              />
-              <label htmlFor="proxy" className="ml-3 block text-xs text-gray-400 cursor-pointer">
-                <strong className="text-gray-300">Use CORS Proxy</strong>
-                <br />
-                Required when running in a web browser to prevent the API requests from being blocked.
-              </label>
             </div>
 
             <button
