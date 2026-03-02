@@ -10,3 +10,105 @@ body {
   margin: 0;
   min-height: 100vh;
 }
+
+.ambient-glow {
+  position: absolute;
+  width: 36rem;
+  height: 36rem;
+  border-radius: 9999px;
+  filter: blur(80px);
+  mix-blend-mode: screen;
+  animation: float-glow 18s ease-in-out infinite;
+}
+
+.ambient-glow-blue {
+  top: -10rem;
+  right: -6rem;
+  background: radial-gradient(circle, rgb(59 130 246 / 30%) 0%, rgb(59 130 246 / 0%) 70%);
+}
+
+.ambient-glow-purple {
+  bottom: -14rem;
+  left: -10rem;
+  background: radial-gradient(circle, rgb(168 85 247 / 24%) 0%, rgb(168 85 247 / 0%) 70%);
+  animation-delay: -7s;
+}
+
+
+.login-pulse-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 1.1rem;
+  border: 1px solid rgb(96 165 250 / 50%);
+  box-shadow: 0 0 0 0 rgb(59 130 246 / 35%);
+  animation: pulse-ring 2.2s ease-out infinite;
+}
+
+.sensor-card {
+  animation: card-rise 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.sparkline-draw-orange,
+.sparkline-draw-blue {
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: draw-line 1.6s ease-out forwards;
+}
+
+.sparkline-draw-orange {
+  filter: drop-shadow(0 0 5px rgb(249 115 22 / 45%));
+}
+
+.sparkline-draw-blue {
+  filter: drop-shadow(0 0 5px rgb(59 130 246 / 40%));
+}
+
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float-glow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -20px, 0) scale(1.04);
+  }
+}
+
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.9;
+    box-shadow: 0 0 0 0 rgb(59 130 246 / 35%);
+  }
+
+  70% {
+    transform: scale(1.08);
+    opacity: 0;
+    box-shadow: 0 0 0 18px rgb(59 130 246 / 0%);
+  }
+
+  100% {
+    transform: scale(1.08);
+    opacity: 0;
+    box-shadow: 0 0 0 0 rgb(59 130 246 / 0%);
+  }
+}
