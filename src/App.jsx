@@ -373,21 +373,31 @@ export default function App() {
   );
 }
 
-function Sparkline({ data, color, className = 'h-14 w-full mt-2' }) {
+function Sparkline({ data, color, className = 'h-14 w-full mt-2', yMin = null, yMax = null, markerStep = null }) {
   if (!data || data.length < 2) return <div className={className} />;
 
   const minX = Math.min(...data.map((point) => point.x));
   const maxX = Math.max(...data.map((point) => point.x));
-  const minY = Math.min(...data.map((point) => point.y));
-  const maxY = Math.max(...data.map((point) => point.y));
+  const minDataY = Math.min(...data.map((point) => point.y));
+  const maxDataY = Math.max(...data.map((point) => point.y));
 
   const rangeX = maxX - minX || 1;
-  const rangeY = maxY - minY || 1;
+  const rangeY = maxDataY - minDataY || 1;
   const paddingY = rangeY * 0.15;
 
-  const adjustedMinY = minY - paddingY;
-  const adjustedMaxY = maxY + paddingY;
+  const adjustedMinY = yMin ?? minDataY - paddingY;
+  const adjustedMaxY = yMax ?? maxDataY + paddingY;
   const adjustedRangeY = adjustedMaxY - adjustedMinY || 1;
+
+  const markerValues =
+    markerStep && markerStep > 0
+      ? Array.from(
+          {
+            length: Math.floor(adjustedMaxY / markerStep) - Math.ceil(adjustedMinY / markerStep) + 1
+          },
+          (_, index) => (Math.ceil(adjustedMinY / markerStep) + index) * markerStep
+        )
+      : [];
 
   const pathData = data
     .map((point, index) => {
@@ -409,6 +419,21 @@ function Sparkline({ data, color, className = 'h-14 w-full mt-2' }) {
   return (
     <div className={`${className} overflow-hidden relative group`}>
       <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
+        {markerValues.map((markerValue) => {
+          const y = 100 - ((markerValue - adjustedMinY) / adjustedRangeY) * 100;
+          return (
+            <line
+              key={markerValue}
+              x1="0"
+              y1={y}
+              x2="100"
+              y2={y}
+              className="stroke-gray-500/25"
+              strokeWidth="0.6"
+              vectorEffect="non-scaling-stroke"
+            />
+          );
+        })}
         <path d={areaData} className={`${theme[color].fill} stroke-none`} vectorEffect="non-scaling-stroke" />
         <path
           d={pathData}
@@ -469,7 +494,10 @@ function SensorCard({ sensor, unit, onGraphExpand, index = 0 }) {
       metric: type,
       value: type === 'temperature' ? formatTemp(sample?.temperature) : formatHumidity(sample?.humidity),
       data: type === 'temperature' ? tempGraphData : humGraphData,
-      color: type === 'temperature' ? 'orange' : 'blue'
+      color: type === 'temperature' ? 'orange' : 'blue',
+      yMin: type === 'temperature' ? (unit === 'C' ? ((40 - 32) * 5) / 9 : 40) : null,
+      yMax: type === 'temperature' ? (unit === 'C' ? ((90 - 32) * 5) / 9 : 90) : null,
+      markerStep: type === 'temperature' ? (unit === 'C' ? (10 * 5) / 9 : 10) : null
     });
   };
 
@@ -524,7 +552,13 @@ function SensorCard({ sensor, unit, onGraphExpand, index = 0 }) {
                 </div>
                 <div className="text-3xl font-black text-white tracking-tighter">{formatTemp(sample.temperature)}</div>
               </div>
-              <Sparkline data={tempGraphData} color="orange" />
+              <Sparkline
+                data={tempGraphData}
+                color="orange"
+                yMin={unit === 'C' ? ((40 - 32) * 5) / 9 : 40}
+                yMax={unit === 'C' ? ((90 - 32) * 5) / 9 : 90}
+                markerStep={unit === 'C' ? (10 * 5) / 9 : 10}
+              />
             </button>
 
             <button
@@ -607,7 +641,14 @@ function GraphModal({ graph, onClose }) {
         </div>
 
         <div className="h-80 bg-gray-950/80 border border-gray-800 rounded-xl p-4">
-          <Sparkline data={graph.data} color={graph.color} className="h-full w-full" />
+          <Sparkline
+            data={graph.data}
+            color={graph.color}
+            className="h-full w-full"
+            yMin={graph.yMin}
+            yMax={graph.yMax}
+            markerStep={graph.markerStep}
+          />
         </div>
       </div>
     </div>
