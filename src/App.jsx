@@ -218,8 +218,11 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4 text-gray-100">
         <div className="bg-gray-900 rounded-2xl shadow-2xl shadow-black/50 p-8 max-w-md w-full border border-gray-800">
           <div className="flex justify-center mb-6">
-            <div className="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-900/50">
-              <Activity className="w-8 h-8 text-white" />
+            <div className="relative">
+              <span className="login-pulse-ring" />
+              <div className="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-900/50 relative z-[1]">
+                <Activity className="w-8 h-8 text-white" />
+              </div>
             </div>
           </div>
           <h1 className="text-2xl font-bold text-center mb-2">SensorPush Portal</h1>
@@ -270,7 +273,12 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 pb-12">
+    <div className="min-h-screen bg-gray-950 text-gray-100 pb-12 relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="ambient-glow ambient-glow-blue" />
+        <div className="ambient-glow ambient-glow-purple" />
+      </div>
+
       <header className="bg-gray-900 shadow-md border-b border-gray-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center">
@@ -320,7 +328,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-[1]">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Dashboard Overview</h2>
           <span className="text-sm font-medium text-gray-400 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">
@@ -349,8 +357,8 @@ export default function App() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sensors.map((sensor) => (
-            <SensorCard key={sensor.id} sensor={sensor} unit={unit} onGraphExpand={setExpandedGraph} />
+          {sensors.map((sensor, index) => (
+            <SensorCard key={sensor.id} sensor={sensor} unit={unit} onGraphExpand={setExpandedGraph} index={index} />
           ))}
         </div>
       </main>
@@ -396,13 +404,15 @@ function Sparkline({ data, color, className = 'h-14 w-full mt-2' }) {
     blue: { stroke: 'stroke-blue-500', fill: 'fill-blue-500/20' }
   };
 
+  const animationClass = color === 'orange' ? 'sparkline-draw-orange' : 'sparkline-draw-blue';
+
   return (
     <div className={`${className} overflow-hidden relative group`}>
       <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
         <path d={areaData} className={`${theme[color].fill} stroke-none`} vectorEffect="non-scaling-stroke" />
         <path
           d={pathData}
-          className={`${theme[color].stroke} fill-none`}
+          className={`${theme[color].stroke} fill-none ${animationClass}`}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -413,7 +423,7 @@ function Sparkline({ data, color, className = 'h-14 w-full mt-2' }) {
   );
 }
 
-function SensorCard({ sensor, unit, onGraphExpand }) {
+function SensorCard({ sensor, unit, onGraphExpand, index = 0 }) {
   const { name, battery, active, sample, history } = sensor;
 
   const formatTemp = (tempF) => {
@@ -478,7 +488,8 @@ function SensorCard({ sensor, unit, onGraphExpand }) {
     <div
       className={`bg-gray-900 rounded-2xl shadow-lg border ${
         !active ? 'border-red-900/50' : 'border-gray-800'
-      } hover:border-gray-700 transition-all relative overflow-hidden flex flex-col h-full`}
+      } hover:border-gray-700 transition-all relative overflow-hidden flex flex-col h-full sensor-card`}
+      style={{ animationDelay: `${Math.min(index * 80, 560)}ms` }}
     >
       {!active && <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />}
 
